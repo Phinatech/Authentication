@@ -1,72 +1,89 @@
 import userModel from "../models/user.model";
-import {Request,Response} from "express"
+import {NextFunction, Request,Response} from "express"
 import bcrypt from "bcrypt"
+import { asynHandler } from "../utils/asyncHandler";
+import { IData } from "../interfaces/user.interface";
+import { AppError, HttpCode } from "../utils/appError";
 
 
-//bcrypt: it helps to encrypt your values encode it and  return the encrypted value when requested6
 
 
+//bcrypt: it helps to encrypt your values encode it and  return the encrypted value when requested
 //Creating  a User
-export const Register = async (req:Request,res:Response):Promise<Response> => {
-    try {
-        const {fullname,email,password,stack,isAdmin} = req.body;
+export const Register = asynHandler(
+    async (
+    req:Request<{},{},IData>,
+    res:Response,
+    next:NextFunction
+    ):Promise<Response> => {
+      const {name,email,password} = req.body;
 
-        const salt:string = await bcrypt.genSalt(10)
-        const hashedpassword = await bcrypt.hash(password,salt)
-        const regUser = await userModel.create({
-            email,password: hashedpassword,fullname,stack,isAdmin
-        })
+      const salt:string = await bcrypt.genSalt(10)
+      const hashedpassword = await bcrypt.hash(password,salt)
+      const regUser = await userModel.create({
+            email,password: hashedpassword,name})
         if (!regUser) {
-            return res.status(401).json({
-                status:"please submit all details"
-            })
+            next(
+                new AppError({
+                    message:"Account not created",
+                    httpCode:HttpCode.BAD_REQUEST,
+                })
+            )
         }
-        return res.status(201).json({
+        return res.status(200).json({
             status:"Success",
             data:regUser
         });
-    } catch (error) {
-        return res.status(400).json({
-            status:"error occured",
-            data:error
-        })
-    }
-}
+});
 
 //Login in or Signin
-export const login =async (req:Request,res:Response):Promise<Response> => {
-    try {
+export const login = asynHandler(
+    async (
+      req:Request,
+      res:Response,
+      next:NextFunction
+      ):Promise<Response> => {
        const {email,password}= req.body;
 
-       if(!email){
-        return res.status(401).json({
-            status:"Please enter your email"
-        })
+        const user = await userModel.findOne({ email });
+    //    if(!email){
+    //    next(
+    //      new AppError({
+    //        message: "User not found",
+    //        httpCode: HttpCode.UNAUTHORIZED,
+    //        isOperational: true,
+    //      })
+    //    );
+    //    }
+       if(!user){
+       next(
+         new AppError({
+           message: "User not found",
+           httpCode: HttpCode.UNAUTHORIZED,
+         
+         })
+       );
        }
-       const User = await userModel.findOne({email});
-
-       const Checkpassword = await bcrypt.compare(password, User!.password)
-       if(User || !Checkpassword){
-        return res.status(200).json({
-            status:"email or password incoorect"
-        });
-       }
+       const Checkpassword = await bcrypt.compare(password, user!.password)
+        if(!Checkpassword){
+        next(
+            new AppError({
+                message:"Email or password not  correct",
+                httpCode:HttpCode.UNAUTHORIZED,
+                isOperational:true,
+            })
+         )
+        }
        return res.status(200).json({
-        status:`Welcome ${User!.fullname}`,
-        data:User
-       })
-
-    } catch (error) {
-        return res.status(400).json({
-          status: "error occured",
-          data: error,
-        }); 
-    }
-}
+        status:`Welcome ${user!.name}` })
+});
 
 
-//
-export const gettingUser = async (req:Request, res:Response):Promise<Response>=> {
+//Getting all users 
+export const gettingUser = async (
+  req:Request, 
+  res:Response
+  ):Promise<Response>=> {
   try {
     const User = await userModel.find();
     return res.status(200).json({
@@ -76,7 +93,7 @@ export const gettingUser = async (req:Request, res:Response):Promise<Response>=>
   } catch (error) {
     return res.status(400).json({
       status: "error occured",
-      data: error,
+      data: error
     });
   }
 };

@@ -5,9 +5,9 @@ const Db_URL = "mongodb://localhost/Authclass"
  const DbConnection =async () => {
  try {
        const authCont = await mongoose.connect(Db_URL);
-       console.log(`Db is connected to ${authCont.connection.host}`);
- } catch (error) {
-    console.log(error);
+       console.log(`Db is connected to: ${authCont.connection.host}`);
+ } catch (error:any) {
+    console.log(error.message);
  }
 }
  export default DbConnection

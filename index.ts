@@ -2,17 +2,31 @@ import express,{Application} from "express"
 import appConfig from "./app"
 import  DbConnection  from "./Config/db"
 
+const app: Application = express();
 const port :number = 2033
 
-const app :Application = express()
+//catching errors that escaped.its coming from nodes it might be coming from user and you didnt perpare for.It only triggers when you input in coming from users
+process.on("uncaughtException",(err:Error)=>{
+    console.log(`uncaughtExpection server shutting down`)
+    console.log(err.name, err.message)
+    process.exit(1)
+})
 
 DbConnection()
 appConfig(app)
 
-
-
-app.listen (port,()=>{
+const server = app.listen (port,()=>{
     console.log(`Server is listening: ${port}`)
+});
+
+//unhandle rejection is an error that you are ready for ie error you  are expecting.and baiscally it acts like a developer error.This is coming from the developer itself.
+
+process.on("unhandledRejection",(reason:any)=>{
+    console.log(`unhandleRejection server shutting down`)
+    console.log(reason.name, reason)
+    server.close(()=>{
+        process.exit(1)
+    })
 })
 
 

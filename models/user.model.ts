@@ -1,17 +1,12 @@
 import mongoose,{Document,Schema,model} from "mongoose";
+import { IData } from "../interfaces/user.interface";
+import isEmail from "validator/lib/isEmail"
 
-interface userData {
-    fullname :string;
-    email:string;
-    password:string;
-    stack:string;
-    isAdmin:string
-}
 
-interface Users extends userData,Document{}
+interface IUser extends IData,Document{}
 
-const userSchema = new Schema({
-    fullname:{
+const userSchema = new Schema<IData>({
+    name:{
         type:String,
         required:[true,"Please enter your Fullname"]
     },
@@ -21,27 +16,20 @@ const userSchema = new Schema({
         required:[true,"Please Your email "],
         unique:true,
         trim:true,
-        lowercase:true
+        lowercase:true,
+        validate:[isEmail, "please enter a valid email"],
     },
 
     password:{
         type:String,
         required:[true,"Please enter your password"],
-        minlength:6
     },
+},{
+    timestamps:true,
+    versionKey:false,
+});
 
-    stack:{
-        type:String,
-
-    },
-    isAdmin:{
-        type:Boolean,
-        default:false
-
-    }
-})
-
-const userModel  = model<Users>("Users", userSchema)
+const userModel  = model<IUser>("Users", userSchema)
 export default userModel
 
 

@@ -1,13 +1,15 @@
 import {Router} from "express"
-import { gettingUser, login, Register } from "../controller/user.controller"
+import { gettingUser, login, Register } from "../controller/user.controller";
+import { loginValidation, registerValidation } from "../validation/auth/userValidation"
 
 const router = Router()
 
-router.route("/register").post(Register)
-router.route("/login").post(login)
-router.route("/getuser").get(gettingUser)
+router.route("/getuser").get(gettingUser);
+router.route("/register").post(registerValidation,Register)
+router.route("/login").post(loginValidation,login)
 
-export default router
+
+export default router;
 
 
 
